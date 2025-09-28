@@ -99,8 +99,8 @@ python -m web_agent.cli --goal "search for gaming laptops under 60000" --model p
 
 ## Project Structure
 
-```
-web_agent/
+
+
 ├── __init__.py          # Package initialization
 ├── agent.py             # Main agent coordination
 ├── browser.py           # Browser automation
@@ -108,7 +108,7 @@ web_agent/
 ├── extractors.py        # Web scraping functions
 ├── ollama_client.py     # AI model communication
 └── planner.py           # Task planning logic
-```
+
 
 ## How It Works
 
@@ -118,26 +118,7 @@ web_agent/
 4. **Data Extraction**: Finds and extracts product information
 5. **Result Formatting**: Organizes data into structured JSON output
 
-## Example Output
-
-When you search for laptops, the agent returns:
-```json
-{
-  "status": "ok",
-  "result": {
-    "goal": "search for laptops under 50k and list top 5",
-    "total_products": 3,
-    "products": [
-      {
-        "title": "HP 15, 13th Gen Intel Core i5-1334U...",
-        "price": "50,990",
-        "site": "Amazon"
-      }
-    ],
-    "sites_visited": ["amazon.in", "flipkart.com"]
-  }
-}
-```
+ 
 
 ## Output Screenshots
 
@@ -146,6 +127,8 @@ The following screenshots demonstrate the agent's operation when searching for l
 ### Amazon Search Results Page
 
 The agent navigates to Amazon India and performs a search for "laptops under 50000". The screenshot shows the search results page with various laptop listings and filtering options.
+
+![img ](https://github.com/user-attachments/assets/593f65c8-7c8a-4e32-9df5-8b9894c82b35)
 
 **Key Features Visible:**
 - Browser address bar shows: `amazon.in/s?k=laptops+under+50000`
@@ -166,6 +149,8 @@ The agent navigates to Amazon India and performs a search for "laptops under 500
 
 The agent also visits Flipkart and searches for "laptops under 50000". The screenshot shows the Flipkart search results page with comprehensive filtering options.
 
+![img 1](https://github.com/user-attachments/assets/b95d9d34-fe82-4f31-abe4-e367f3d817f3)
+
 **Key Features Visible:**
 - Browser address bar shows: `flipkart.com/search?q=laptops+under+50000`
 - Search results display "Showing 1-24 of 2,723 results for 'laptops under 50000'"
@@ -184,42 +169,7 @@ The agent also visits Flipkart and searches for "laptops under 50000". The scree
 - Products show "Flipkart Assured" badges and exchange offers
 - "Top Discount of the Sale" tags are visible
 
-These screenshots demonstrate the agent's successful navigation to both major e-commerce platforms and its ability to extract product information from the search results pages.
 
-## Troubleshooting
-
-### Common Issues
-
-1. **Ollama not running**
-   - Solution: Start Ollama server with `ollama serve`
-
-2. **Browser fails to launch**
-   - Solution: Reinstall Playwright browsers with `python -m playwright install chromium`
-
-3. **No products found**
-   - Some websites may block automated access
-   - Try different search terms or wait a few minutes
-
-4. **Model not found**
-   - Download the model with `ollama pull phi3`
-
-### Getting Help
-
-If you encounter issues:
-1. Check that Ollama server is running
-2. Verify Python dependencies are installed
-3. Ensure Playwright browsers are installed
-4. Try running with `--headed` to see browser behavior
-
-## Learning Objectives
-
-This project teaches:
-- Web automation with Playwright
-- Local AI integration with Ollama
-- Web scraping and data extraction
-- Command line interface development
-- Python async programming
-- JSON data handling
 
 ## Next Steps
 
@@ -230,6 +180,3 @@ To extend this project:
 4. Create a web interface
 5. Add more search categories
 
-## License
-
-This project is for educational purposes. Please respect website terms of service when scraping data.
