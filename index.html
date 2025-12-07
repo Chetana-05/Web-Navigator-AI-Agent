@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Web Navigator AI Agent</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"; margin: 24px; color: #0f172a; background: #f8fafc; }
+    .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); max-width: 880px; margin: 0 auto; }
+    h1 { margin: 0 0 12px; font-size: 24px; }
+    p.sub { margin: 0 0 24px; color: #475569; }
+    label { font-weight: 600; display: block; margin-bottom: 8px; }
+    input[type="text"] { width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 10px; outline: none; font-size: 15px; }
+    .row { display: flex; gap: 12px; align-items: center; margin-top: 12px; }
+    .row > * { flex: 1; }
+    .row small { color: #64748b; }
+    button { background: #2563eb; color: white; border: 0; padding: 12px 16px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .results { margin-top: 20px; white-space: pre-wrap; background: #0b1020; color: #d1d5db; padding: 16px; border-radius: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 13px; }
+    .section-title { font-weight: 700; font-size: 16px; color: #0f172a; margin: 16px 0 8px; }
+    .summary { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+    .summary .item { display: flex; flex-direction: column; gap: 4px; }
+    .summary .label { font-size: 12px; color: #64748b; }
+    .summary .value { font-weight: 600; color: #0f172a; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; }
+    thead th { text-align: left; font-size: 13px; color: #475569; background: #f1f5f9; padding: 10px; border-bottom: 1px solid #e2e8f0; }
+    tbody td { padding: 10px; border-top: 1px solid #e2e8f0; font-size: 14px; }
+    tbody tr:nth-child(odd) { background: #f8fafc; }
+    .link { color: #2563eb; text-decoration: none; }
+    .link:hover { text-decoration: underline; }
+    .inline { display: inline-flex; align-items: center; gap: 8px; }
+    .compact { flex: 0 0 220px; }
+    .compact input[type="text"] { width: 100%; }
+    .row { flex-wrap: wrap; }
+    small { display: block; margin-top: 4px; }
+    .section-title { font-weight: 700; font-size: 16px; color: #0f172a; margin: 16px 0 8px; }
+    .json-dump { max-height: 40vh; overflow: auto; }
+    @media (max-width: 700px) {
+      .compact { flex: 1 1 160px; }
+      .compare .grid2 { grid-template-columns: 1fr; }
+      .compare .pane iframe { height: 50vh; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Web Navigator AI Agent</h1>
+    <p class="sub">Enter a goal and run the agent. Optionally show the Chromium window.</p>
+
+    <label for="goal">Goal</label>
+    <input id="goal" type="text" placeholder="e.g. search for laptops under 50k and list top 5" />
+
+    <div class="row">
+      <div class="inline">
+        <input id="headed" type="checkbox" />
+        <label for="headed">Show browser (headed)</label>
+      </div>
+      <div class="compact">
+        <label for="model">Model</label>
+        <input id="model" type="text" value="llama3.1" />
+        <small>Ignored if Ollama is not installed</small>
+      </div>
+      <div class="compact">
+        <label for="maxSteps">Max steps</label>
+        <input id="maxSteps" type="text" value="12" />
+      </div>
+      <div class="inline" style="flex:0 0 auto">
+        <input id="autoOpen" type="checkbox" />
+        <label for="autoOpen">Also open sites</label>
+      </div>
+      <div style="flex:0 0 auto">
+        <button id="runBtn">Run</button>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:16px">
+      <button id="openAmazon" style="background:#16a34a">Open Amazon</button>
+      <button id="openFlipkart" style="background:#9333ea">Open Flipkart</button>
+      <button id="openBoth" style="background:#0ea5e9">Open Both</button>
+    </div>
+
+    <div class="section-title">Settings</div>
+    <div class="summary" id="settingsSummary" hidden>
+      <div class="item"><div class="label">Model</div><div class="value" id="sModel">-</div></div>
+      <div class="item"><div class="label">Max steps</div><div class="value" id="sMax">-</div></div>
+      <div class="item"><div class="label">Also open sites</div><div class="value" id="sAlso">-</div></div>
+    </div>
+
+    <div class="section-title">Structured results</div>
+    <div class="summary" id="resultSummary" hidden>
+      <div class="item"><div class="label">Goal</div><div class="value" id="rGoal">-</div></div>
+      <div class="item"><div class="label">Total products</div><div class="value" id="rTotal">-</div></div>
+      <div class="item"><div class="label">Sites visited</div><div class="value" id="rSites">-</div></div>
+    </div>
+    <div class="table-wrap" id="tableWrap" hidden>
+      <table>
+        <thead>
+          <tr><th>Title</th><th>Price</th><th>Site</th><th>Link</th></tr>
+        </thead>
+        <tbody id="prodBody"></tbody>
+      </table>
+    </div>
+
+    <div class="section-title">Raw JSON</div>
+    <div class="results" id="output" hidden></div>
+  </div>
+
+  <script>
+    const el = (id) => document.getElementById(id);
+    const btn = el('runBtn');
+    const out = el('output');
+    const sModel = el('sModel');
+    const sMax = el('sMax');
+    const sAlso = el('sAlso');
+    const settingsSummary = el('settingsSummary');
+    const resultSummary = el('resultSummary');
+    const rGoal = el('rGoal');
+    const rTotal = el('rTotal');
+    const rSites = el('rSites');
+    const tableWrap = el('tableWrap');
+    const prodBody = el('prodBody');
+    const openAmazon = el('openAmazon');
+    const openFlipkart = el('openFlipkart');
+    const openBoth = el('openBoth');
+    const autoOpen = el('autoOpen');
+
+    btn.addEventListener('click', async () => {
+      const goal = el('goal').value.trim();
+      const headed = el('headed').checked;
+      const model = el('model').value.trim() || 'llama3.1';
+      const maxSteps = parseInt(el('maxSteps').value || '12', 10);
+      if (!goal) { alert('Please enter a goal.'); return; }
+
+      btn.disabled = true;
+      out.hidden = false;
+      out.textContent = 'Running...';
+      try {
+        const res = await fetch('/api/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ goal, model, headed, max_steps: maxSteps })
+        });
+        const data = await res.json();
+        out.textContent = JSON.stringify(data, null, 2);
+        if (autoOpen.checked) openSitesForGoal(goal);
+
+        // Populate settings summary
+        sModel.textContent = model;
+        sMax.textContent = String(maxSteps);
+        sAlso.textContent = headed ? 'Yes' : 'No';
+        settingsSummary.hidden = false;
+
+        // Populate result summary
+        const result = data && data.result ? data.result : {};
+        rGoal.textContent = result.goal || goal;
+        rTotal.textContent = String(result.total_products || (result.products ? result.products.length : 0));
+        rSites.textContent = Array.isArray(result.sites_visited) ? result.sites_visited.join(', ') : '-';
+        resultSummary.hidden = false;
+
+        // Populate table
+        const products = Array.isArray(result.products) ? result.products : [];
+        prodBody.innerHTML = '';
+        products.forEach(p => {
+          const tr = document.createElement('tr');
+          const tdTitle = document.createElement('td'); tdTitle.textContent = p.title || '-';
+          const tdPrice = document.createElement('td'); tdPrice.textContent = p.price || '-';
+          const tdSite = document.createElement('td'); tdSite.textContent = p.site || '-';
+          const tdLink = document.createElement('td');
+          if (p.url && p.url !== '#') {
+            const a = document.createElement('a'); a.href = p.url; a.textContent = 'View'; a.target = '_blank'; a.className = 'link';
+            tdLink.appendChild(a);
+          } else { tdLink.textContent = '-'; }
+          tr.appendChild(tdTitle); tr.appendChild(tdPrice); tr.appendChild(tdSite); tr.appendChild(tdLink);
+          prodBody.appendChild(tr);
+        });
+        tableWrap.hidden = false;
+      } catch (err) {
+        out.textContent = String(err);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    function encodeQuery(q) {
+      return encodeURIComponent(q.replace(/\s+/g, ' ').trim());
+    }
+
+
+    openAmazon.addEventListener('click', () => {
+      const goal = el('goal').value.trim();
+      if (!goal) { alert('Please enter a goal.'); return; }
+      const q = encodeQuery(goal);
+      const url = `https://www.amazon.in/s?k=${q}`;
+      window.open(url, '_blank');
+    });
+
+    openFlipkart.addEventListener('click', () => {
+      const goal = el('goal').value.trim();
+      if (!goal) { alert('Please enter a goal.'); return; }
+      const q = encodeQuery(goal);
+      const url = `https://www.flipkart.com/search?q=${q}`;
+      window.open(url, '_blank');
+    });
+
+    openBoth.addEventListener('click', () => {
+      const goal = el('goal').value.trim();
+      if (!goal) { alert('Please enter a goal.'); return; }
+      const q = encodeQuery(goal);
+      // Open both sites in separate tabs
+      window.open(`https://www.amazon.in/s?k=${q}`, '_blank');
+      setTimeout(() => window.open(`https://www.flipkart.com/search?q=${q}`, '_blank'), 100);
+    });
+
+    // no-op
+
+    function openSitesForGoal(goal) {
+      const q = encodeQuery(goal);
+      window.open(`https://www.amazon.in/s?k=${q}`, '_blank');
+      setTimeout(() => window.open(`https://www.flipkart.com/search?q=${q}`, '_blank'), 100);
+    }
+  </script>
+</body>
+</html>
+
+

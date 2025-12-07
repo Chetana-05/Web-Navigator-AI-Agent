@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Compare: Amazon vs Flipkart</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans"; margin: 16px; color: #0f172a; background: #f8fafc; }
+    .bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .bar .left { display:flex; align-items:center; gap:10px; }
+    input[type="text"] { padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; width: 360px; }
+    button { background: #2563eb; color: white; border: 0; padding: 10px 14px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .pane { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
+    .pane header { padding: 8px 10px; background: #f1f5f9; border-bottom: 1px solid #e2e8f0; font-weight: 600; font-size: 13px; display:flex; justify-content:space-between; align-items:center; }
+    .pane iframe { width: 100%; height: 80vh; border: 0; background: #fff; }
+    .note { font-size: 12px; color: #64748b; }
+    @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } .pane iframe { height: 60vh; } }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <div class="left">
+      <strong>Compare</strong>
+      <input id="goal" type="text" placeholder="search term" />
+      <button id="apply">Apply</button>
+    </div>
+    <div class="note" id="note">Some sites may block embedding. Use the Open links if a panel is blank.</div>
+  </div>
+
+  <div class="grid2">
+    <div class="pane">
+      <header>
+        <span>Amazon</span>
+        <a id="aLink" href="#" target="_blank">Open</a>
+      </header>
+      <iframe id="aFrame" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
+    </div>
+    <div class="pane">
+      <header>
+        <span>Flipkart</span>
+        <a id="fLink" href="#" target="_blank">Open</a>
+      </header>
+      <iframe id="fFrame" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
+    </div>
+  </div>
+
+  <script>
+    const el = (id) => document.getElementById(id);
+    const goal = el('goal');
+    const apply = el('apply');
+    const aFrame = el('aFrame');
+    const fFrame = el('fFrame');
+    const aLink = el('aLink');
+    const fLink = el('fLink');
+    const note = el('note');
+
+    function getParam(name) {
+      const params = new URLSearchParams(location.search);
+      return params.get(name) || '';
+    }
+
+    function encodeQuery(q) { return encodeURIComponent(q.replace(/\s+/g, ' ').trim()); }
+
+    function setSources(q) {
+      const aUrl = `https://www.amazon.in/s?k=${q}`;
+      const fUrl = `https://www.flipkart.com/search?q=${q}`;
+      aFrame.src = aUrl; fFrame.src = fUrl; aLink.href = aUrl; fLink.href = fUrl;
+      let aLoaded = false, fLoaded = false;
+      aFrame.addEventListener('load', () => { aLoaded = true; }, { once: true });
+      fFrame.addEventListener('load', () => { fLoaded = true; }, { once: true });
+      setTimeout(() => {
+        if (!aLoaded || !fLoaded) note.textContent = 'Embedding blocked by one or both sites. Use the Open links.';
+        else note.textContent = 'Side-by-side view loaded.';
+      }, 2500);
+    }
+
+    // Initialize from URL param
+    const initialQ = getParam('q');
+    if (initialQ) {
+      goal.value = decodeURIComponent(initialQ);
+      setSources(initialQ);
+    }
+
+    apply.addEventListener('click', () => {
+      const q = encodeQuery(goal.value || '');
+      if (!q) { alert('Please enter a query'); return; }
+      history.replaceState(null, '', `?q=${q}`);
+      setSources(q);
+    });
+  </script>
+</body>
+</html>
+
+
+
